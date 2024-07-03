@@ -21,5 +21,9 @@ const router = createRouter({
     routes,
 })
 
+router.beforeEach((to, from, next) => {
+    document.title = `${import.meta.env.VITE_APP_TITLE} - ${to.name}`;
+    next();
+})
 
 export default router;

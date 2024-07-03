@@ -8,12 +8,5 @@ import GuestLayout from './layouts/GuestLayout.vue'
 import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
 import { ref, computed } from 'vue';
 
-
-const auth = (val = false) => {
-    return val
-}
-
-const isAuthenticated = computed(() => auth(true));
-
-
+const isAuthenticated = computed(() => false);
 </script>
