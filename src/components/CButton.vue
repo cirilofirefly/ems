@@ -4,15 +4,20 @@ defineProps({
     title: {
         type: String,
         default: 'Title'
+    },
+    loading: {
+        type: Boolean,
+        default: false
     }
 })
 
 </script>
 <template>
-    <button class="btn-style">{{ title }}</button>
+    <button 
+        :disabled="loading" 
+        class="flex btn btn-primary"
+    >
+        <span v-if="loading" class="loading loading-spinner loading-md"></span>
+        <p>{{ loading ? 'Loading...' : title }}</p>
+    </button>
 </template>
-<style>
-.btn-style {
-    @apply rounded-md bg-blue-500 shadow-md px-2 py-1 text-white text-sm hover:ring-2;
-}
-</style>

@@ -1,4 +1,5 @@
 <script setup>
+const model = defineModel();
 const props = defineProps(({
     type: {
         type: String,
@@ -11,14 +12,10 @@ const props = defineProps(({
 }))
 </script>
 <template>
-    <input 
+    <input
+        v-model="model"
         :type="props.type"
         :placeholder="props.placeholder" 
-        class="input-style"
+        class="input input-bordered input-primary"
     >
 </template>
-<style>
-.input-style {
-    @apply border-blue-500 border-2 focus:border-2 focus:border-blue-500 rounded px-2 py-1 placeholder:text-sm;
-}
-</style>

@@ -14,7 +14,7 @@ const options = {
 
 const app = createApp(App);
 app.use(router);
-app.use(VueAxios, axios);
 app.use(Toast, options);
+app.use(VueAxios, axios);
 app.provide('axios', app.config.globalProperties.axios);
 app.mount('#app');

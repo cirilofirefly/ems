@@ -17,8 +17,16 @@ axios.interceptors.request.use(
     }
 );
 axios.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        
+        if(response.status == 200 && response?.data.message) {
+            toast.success(response.data.message);
+        }
+
+        return response.data
+    },
     (error) => {
+        console.log(error)
         toast.error(error?.message);
         return Promise.reject(error);
    }
