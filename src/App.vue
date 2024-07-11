@@ -6,7 +6,8 @@
 <script setup>
 import GuestLayout from './layouts/GuestLayout.vue'
 import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
+import { getCookie } from './cookies';
 
-const isAuthenticated = computed(() => false);
+const isAuthenticated = computed(() => getCookie('access_token'));
 </script>

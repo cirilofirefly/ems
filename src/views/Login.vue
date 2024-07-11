@@ -13,36 +13,34 @@
         </div>
     </div>
 </template>
+
 <script setup>
 import { inject, ref } from 'vue';
 import { setCookie } from '../cookies';
-import { useRouter } from 'vue-router'
 import CInput from '../components/CInput.vue';
 import CButton from '../components/CButton.vue';
 import CError from '../components/CError.vue';
 import { ButtonType } from '../enums'
 
 const axios = inject('axios');
-const router = useRouter()
-const isLoading = ref(false)
+const isLoading = ref(false);
+
 const credentials = ref({
     email: '',
     password: ''
 });
+
 const error = ref({
     email: '',
     password: ''
 });
 
 const login = () => {
-
     resetLoginValues();
     axios.post('/login', credentials.value)
         .then((res) => {
-            setCookie('user', res.data.user, 60 + 30)
-            setCookie('access_token', res.data.access_token, 60 + 30);
-            router.push({ name: 'Home' });
             isLoading.value = false
+            setLoginValues(res)
         })
         .catch(({ response }) => {
             isLoading.value = false
@@ -56,6 +54,12 @@ const resetLoginValues = () => {
         email: '',
         password: ''
     }
+}
+
+const setLoginValues = (res) => {
+    setCookie('user', res.data.user, '30min')
+    setCookie('access_token', res.data.access_token, '30min');
+    setTimeout(() => window.location.href = '/', 2000)
 }
 
 const setErrorValues = (errors) => {
