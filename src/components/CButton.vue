@@ -15,9 +15,9 @@ defineProps({
 <template>
     <button 
         :disabled="loading" 
-        class="flex btn btn-primary"
+        class="flex btn"
     >
-        <span v-if="loading" class="loading loading-spinner loading-md"></span>
-        <p>{{ loading ? 'Loading...' : title }}</p>
+        <slot name="icon" />
+        <p v-if="title">{{ loading ? 'Loading...' : title }}</p>
     </button>
 </template>

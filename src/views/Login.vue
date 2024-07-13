@@ -8,7 +8,17 @@
                 <CInput v-model="credentials.password" :placeholder="'Password'" id="password" :type="'password'"
                     class="w-[20rem]" />
                 <CError v-if="error.password" :message="error.password" />
-                <CButton class="w-[8rem]" :type="ButtonType.SUBMIT" :title="'Login'" :loading="isLoading" />
+                <CButton 
+                    class="w-[8rem] btn btn-primary" 
+                    :type="ButtonType.SUBMIT" 
+                    :title="'Login'" 
+                    :loading="isLoading"
+                >
+                    <template #icon>
+                        <span v-if="isLoading" class="loading loading-spinner loading-xs"></span>
+                        <i v-else class="bi bi-box-arrow-in-left"></i>
+                    </template>
+                </CButton>
             </form>
         </div>
     </div>

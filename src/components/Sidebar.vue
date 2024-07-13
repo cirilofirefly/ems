@@ -36,7 +36,7 @@ const logout = () => {
             <li v-for="(navItem, index) in navItems" :key="index" :title="navItem.name">
                 <router-link
                     v-if="navItem.route" 
-                    class="route-link-item" 
+                    class="route-link-item hover:text-primary hover:bg-slate-100" 
                     :class="{'justify-center' : isClosed}" 
                     :to="navItem.route" 
                     activeClass="route-link-item-active"
@@ -47,12 +47,12 @@ const logout = () => {
                 </router-link>
                 <div v-else>
                     <button
+                        @click="navItem.collapse = !navItem.collapse"
                         class="w-full route-link-item" 
                         :class="{
                             'justify-center' : isClosed, 
-                            'route-link-item-active' : !navItem.collapse }
-                        "
-                        @click="() => navItem.collapse = !navItem.collapse" 
+                            'route-link-item-active' : !(navItem.collapse) 
+                        }"
                     >
                         <i :class="`bi bi-${navItem.icon}`"></i>
                         <p v-if="!isClosed">{{ navItem.name }}</p>
@@ -66,7 +66,7 @@ const logout = () => {
                     >
                         <li v-for="(subRoute, index) in navItem.subRoutes" :key="index" :title="subRoute.name">
                             <router-link
-                                class="route-link-item text-sm"
+                                class="route-link-item text-sm hover:text-primary hover:bg-slate-100"
                                 :to="subRoute.route"
                                 activeClass="text-primary text-sm font-semibold"
                             >
@@ -107,7 +107,7 @@ const logout = () => {
 }
 
 .route-link-item {
-    @apply flex items-center p-2 rounded space-x-4;
+    @apply flex items-center p-2 rounded space-x-4 transition-all;
 }
 
 .route-link-item-active {
