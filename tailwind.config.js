@@ -4,6 +4,11 @@ export default {
     "./index.html",
     "./src/**/*.{vue,js,ts,jsx,tsx}",
   ],
+  safelist: [
+    'bg-red-500',
+    'text-3xl',
+    'lg:text-4xl',
+  ],  
   theme: {
     extend: {},
   },

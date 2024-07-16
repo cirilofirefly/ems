@@ -4,6 +4,7 @@ import CButton from '../../components/CButton.vue';
 import CInput from '../../components/CInput.vue';
 import CModal from '../../components/CModal.vue';
 import { useToast } from 'vue-toastification';
+import dateFromat from '../../helpers/dateFormat';
 
 const search = ref('');
 const events = ref([]);
@@ -39,6 +40,11 @@ const modalList = ref({
             id: 0,
             
         }
+    },
+    content: {
+        open: false,
+        title: 'Event Content',
+        content: ''
     }
 });
 
@@ -57,7 +63,7 @@ const createEvent = () => {
     axios.post('event', modalList.value['create'].fields)
         .then((response) => {
             toast.success('Event successfully created!');
-            events.value.unshift(response);
+            events.value.unshift({...response, total_participant: 0});
             modalList.value['create'].processing = false
             resetFormValues('create');
             toggleModal('create', false);
@@ -127,6 +133,7 @@ const toggleModal = (formType, state) => {
 
 onMounted(() => {
     getEvents();
+ 
 });
 
 </script>
@@ -145,23 +152,41 @@ onMounted(() => {
             <table class="table">
                 <thead>
                     <tr>
-                        <th></th>
+                        <th>#</th>
                         <th>Title</th>
-                        <th>Participants</th>
-                        <th>Content</th>
+                        <th>Date and Time</th>
+                        <th class="text-center">Participants</th>
+                        <th class="text-center">Status</th>
                         <th class="text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-if="!loadingTable" v-for="(event, index) in events" :key="index" class="hover:bg-slate-100">
-                        <th>{{ event.id }}</th>
+                        <th colspan="1">{{ event.id }}</th>
                         <td>{{ event.title }}</td>
-                        <td>View Participants</td>
-                        <td>{{ event.content }}</td>
+                        <td>{{ `${dateFromat(event.date)} at ${event.time}`  }}</td>
+                        <td class="font-bold text-center">{{ event.total_participant }}</td>
+                        <td class="text-center">
+                            <div class="capitalize badge badge-primary badge-outline">{{ event.status }}</div>
+                        </td>
                         <td class="flex justify-center items-center space-x-2">
                             <CButton 
                                 :title="''" 
-                                class="btn btn-primary btn-sm items-center"
+                                class="btn btn-info text-white btn-sm items-center tooltip"
+                                data-tip="View Content"
+                                @click="
+                                    modalList.content.content = event.content;
+                                    toggleModal('content', true);
+                                "
+                            >
+                                <template #icon>
+                                    <i class="bi bi-eye"></i>
+                                </template>
+                            </CButton>
+                            <CButton 
+                                :title="''" 
+                                class="btn btn-primary btn-sm items-center tooltip"
+                                data-tip="Edit"
                                 @click="
                                     toggleModal('update', true)
                                     modalList.update.fields = { ...event };
@@ -173,7 +198,8 @@ onMounted(() => {
                             </CButton>
                             <CButton 
                                 :title="''" 
-                                class="btn btn-error btn-sm items-center"
+                                class="btn btn-error btn-sm items-center tooltip"
+                                data-tip="Delete"
                                 @click="
                                     toggleModal('delete', true);
                                     modalList.delete.fields.id = event.id;
@@ -281,11 +307,13 @@ onMounted(() => {
                     <div class="label">
                         <span class="label-text">Content</span>
                     </div>
-                    <textarea 
-                        v-model="modalList['create'].fields.content"
-                        class="textarea textarea-bordered h-24" 
-                        placeholder="Enter your content"
-                    ></textarea>
+                    <QuillEditor 
+                        placeholder="Enter your content" 
+                        class="!h-36" 
+                        contentType="html"
+                        v-model:content="modalList['create'].fields.content" 
+                        theme="snow" 
+                    />
                     <div class="label" v-if="modalList['create'].errors['content']">
                         <span 
                             class="label-text text-error" 
@@ -476,6 +504,20 @@ onMounted(() => {
                     :title="'Close'"
                  />
             </template>
+        </CModal>
+
+        <CModal
+            :open="modalList.content.open" 
+            :title="modalList.content.title" 
+            @toggle="toggleModal('content', $event)"
+            @submit-callback="false"
+        >
+            <template #modal-body>
+                <div class="max-h-[30rem]">
+                    <div v-html="modalList.content.content"></div>
+                </div>
+            </template>
+            <template #action />
         </CModal>
     </div>
 </template>

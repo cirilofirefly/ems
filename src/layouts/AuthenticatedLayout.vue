@@ -25,7 +25,6 @@ const navItems = ref([
         collapse: true, 
         subRoutes: [
             { name: 'Management', icon: 'kanban', route: '/event/management' },
-            { name: 'Registration', icon: 'people', route: '/event/registration' },
         ] 
     },
 ]);
