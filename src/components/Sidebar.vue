@@ -24,7 +24,7 @@ const logout = () => {
         <div class="profile-container">
             <div class="avatar">
                 <div class="w-12 rounded-xl">
-                    <img src="https://scontent.fceb6-1.fna.fbcdn.net/v/t39.30808-6/405092892_1833533063749945_8196012846643501737_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeGKQivaSF_PvMN3iOl4IbsLnh-f5AWQLYOeH5_kBZAtg_DKnNtZwMbgYhc78Yn6l81TcCV2DCaLKSMwkDp1zdUu&_nc_ohc=bP5P7msBgfUQ7kNvgEimugw&_nc_ht=scontent.fceb6-1.fna&oh=00_AYDae76JCAmhYgBrrmcYOTTkmHTaS13Qbnj4pySaqig8Eg&oe=66954456" />
+                    <img src="https://cdn.vox-cdn.com/thumbor/pQ1cPtxLW3aZ6veWX02K94iMQM0=/0x0:1920x1080/1400x1400/filters:focal(960x540:961x541)/cdn.vox-cdn.com/uploads/chorus_asset/file/23606383/ffxviclive.png" />
                 </div>
             </div>
             <div v-if="!isClosed" class="space-y-0">

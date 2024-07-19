@@ -2,7 +2,7 @@
     <div class="bg-indigo-700">
         <div class="bg-white shadow-lg w-[40rem] h-screen flex flex-col items-center justify-center">
             <form @submit.prevent="login" class="flex flex-col items-start space-y-4">
-                <h1 class="font-semibold text-3xl">Login</h1>
+                <h1 class="font-semibold text-3xl">Admin Login</h1>
                 <CInput v-model="credentials.email" :placeholder="'Email'" id="email" class="w-[20rem]" />
                 <CError v-if="error.email" :message="error.email" />
                 <CInput v-model="credentials.password" :placeholder="'Password'" id="password" :type="'password'"

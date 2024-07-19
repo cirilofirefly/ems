@@ -1,10 +1,12 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
 import CButton from '../../components/CButton.vue';
+import CTable from '../../components/CTable.vue';
 import CInput from '../../components/CInput.vue';
 import CModal from '../../components/CModal.vue';
 import { useToast } from 'vue-toastification';
-import dateFromat from '../../helpers/dateFormat';
+import dateFormat from '../../helpers/dateFormat';
+import debounce from '../../helpers/debounce';
 
 const search = ref('');
 const events = ref([]);
@@ -50,7 +52,7 @@ const modalList = ref({
 
 const getEvents = () => {
     loadingTable.value = true;
-    axios.get('event')
+    axios.get(`event?search=${search.value}`)
         .then((response) => {
             events.value = response.data;
             loadingTable.value = false;
@@ -131,16 +133,104 @@ const toggleModal = (formType, state) => {
     modalList.value[formType].open = state
 }
 
+const options = {
+    columns: [
+        {
+            name: '#',
+            
+        },
+        {
+            name: 'Title'
+        },
+        {
+            name: 'Date and Time'
+        },
+        {
+            name: 'Participants',
+            centered: true
+        },
+        {
+            name: 'Status',
+            centered: true
+        },
+        {
+            name: 'Actions',
+            centered: true
+        },
+    ],
+    rows: [
+        {
+            columns: [
+                {
+                   key: 'id',
+                }
+            ],
+            type: 'text',
+            colspan: 1,
+            bold: true
+        },
+        {
+            columns: [
+                {
+                   key: 'title',
+                }
+            ],
+            type: 'text',
+        },
+        {
+            columns: [
+                {
+                    key: 'date',
+                    format: 'date'
+                },
+                {
+                    key: 'time',
+                    format: 'time'
+                }
+            ],
+            type: 'combined-columns'
+        },
+        {
+            columns: [
+                {
+                   key: 'total_participant',
+                }
+            ],
+            type: 'text',
+            centered: true,
+            bold: true
+        },
+        {
+            columns: [
+                {
+                   key: 'status',
+                   format: 'status'
+                }
+            ],
+            type: 'text',
+            centered: true,
+        },
+        {
+            columns: [
+                {
+                   key: 'action',
+                }
+            ],
+            type: 'action',
+            centered: true,
+        },
+    ],
+}
+
 onMounted(() => {
     getEvents();
- 
 });
 
 </script>
 <template>
     <div>
         <div class="flex justify-between items-center mt-4 mb-8">
-            <CInput v-model="search" :placeholder="'Search'" id="search" class="w-[20rem]" />
+            <CInput v-model="search" @keypress="getEvents" :placeholder="'Search'" id="search" class="w-[20rem]" />
             <CButton class="w-[8rem] btn-primary" @click="toggleModal('create', true)" :title="'Add Event'">
                 <template #icon>
                     <i class="bi bi-calendar-event"></i>
@@ -148,80 +238,57 @@ onMounted(() => {
             </CButton>
         </div>
 
-        <div class="overflow-x-auto shadow rounded-xl">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Title</th>
-                        <th>Date and Time</th>
-                        <th class="text-center">Participants</th>
-                        <th class="text-center">Status</th>
-                        <th class="text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-if="!loadingTable" v-for="(event, index) in events" :key="index" class="hover:bg-slate-100">
-                        <th colspan="1">{{ event.id }}</th>
-                        <td>{{ event.title }}</td>
-                        <td>{{ `${dateFromat(event.date)} at ${event.time}`  }}</td>
-                        <td class="font-bold text-center">{{ event.total_participant }}</td>
-                        <td class="text-center">
-                            <div class="capitalize badge badge-primary badge-outline">{{ event.status }}</div>
-                        </td>
-                        <td class="flex justify-center items-center space-x-2">
-                            <CButton 
-                                :title="''" 
-                                class="btn btn-info text-white btn-sm items-center tooltip"
-                                data-tip="View Content"
-                                @click="
-                                    modalList.content.content = event.content;
-                                    toggleModal('content', true);
-                                "
-                            >
-                                <template #icon>
-                                    <i class="bi bi-eye"></i>
-                                </template>
-                            </CButton>
-                            <CButton 
-                                :title="''" 
-                                class="btn btn-primary btn-sm items-center tooltip"
-                                data-tip="Edit"
-                                @click="
-                                    toggleModal('update', true)
-                                    modalList.update.fields = { ...event };
-                                "
-                            >
-                                <template #icon>
-                                    <i class="bi bi-pencil-square"></i>
-                                </template>
-                            </CButton>
-                            <CButton 
-                                :title="''" 
-                                class="btn btn-error btn-sm items-center tooltip"
-                                data-tip="Delete"
-                                @click="
-                                    toggleModal('delete', true);
-                                    modalList.delete.fields.id = event.id;
-                                "
-                            >
-                                <template #icon>
-                                    <i class="bi bi-trash"></i>
-                                </template>
-                            </CButton>
-                        </td>
-                    </tr>
-                    <tr v-else>
-                        <td colspan="8" class="py-8 text-center">
-                            <div class="flex justify-center items-center space-x-2">
-                                <span class="loading loading-spinner"></span>
-                                <p>Fetching data...</p>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <CTable 
+            :options="options" 
+            :data="events" 
+            class="overflow-x-auto shadow rounded-xl mb-4"
+        >
+            <template #status="{ datum }">
+                <div class="capitalize badge badge-primary badge-outline">
+                    {{ datum.status }}
+                </div>
+            </template>
+            <template #action="{ datum }">
+                <div class="flex justify-center items-center space-x-2">
+                    <CButton 
+                        :title="''" 
+                        class="btn btn-info text-white btn-sm items-center tooltip" 
+                        data-tip="View Content"
+                        @click="
+                            modalList.content.content = datum.content;
+                        toggleModal('content', true);
+                        ">
+                        <template #icon>
+                            <i class="bi bi-eye"></i>
+                        </template>
+                    </CButton>
+                    <CButton 
+                        :title="''" 
+                        class="btn btn-primary btn-sm items-center tooltip" 
+                        data-tip="Edit" 
+                        @click="
+                            toggleModal('update', true);
+                            modalList.update.fields = { ...datum };
+                    ">
+                        <template #icon>
+                            <i class="bi bi-pencil-square"></i>
+                        </template>
+                    </CButton>
+                    <CButton 
+                        :title="''" 
+                        class="btn btn-error btn-sm items-center tooltip" 
+                        data-tip="Delete" 
+                        @click="
+                            toggleModal('delete', true);
+                            modalList.delete.fields.id = datum.id;
+                    ">
+                        <template #icon>
+                            <i class="bi bi-trash"></i>
+                        </template>
+                    </CButton>
+                </div>
+            </template>
+        </CTable>
 
         <div class="join mt-4">
             <button class="join-item btn">1</button>
@@ -243,21 +310,14 @@ onMounted(() => {
                     <div class="label">
                         <span class="label-text">Title</span>
                     </div>
-                    <input 
-                        v-model="modalList['create'].fields.title" 
-                        type="text" 
-                        placeholder="Enter your title" 
-                        class="input input-bordered w-full max-w-full" 
-                    />
+                    <input v-model="modalList['create'].fields.title" type="text" placeholder="Enter your title"
+                        class="input input-bordered w-full max-w-full" />
                     <div class="label" v-if="modalList['create'].errors['title']">
-                            <span 
-                                class="label-text text-error" 
-                                v-for="(error, index) in modalList['create'].errors['title']"
-                                :key="index"
-                            >
-                                {{ error }}
-                            </span>
-                        </div>
+                        <span class="label-text text-error"
+                            v-for="(error, index) in modalList['create'].errors['title']" :key="index">
+                            {{ error }}
+                        </span>
+                    </div>
                 </label>
 
                 <div class="flex flex-row my-2 space-x-2">
@@ -265,18 +325,11 @@ onMounted(() => {
                         <div class="label">
                             <span class="label-text">Date</span>
                         </div>
-                        <input 
-                            v-model="modalList['create'].fields.date" 
-                            type="date" 
-                            placeholder="Type here" 
-                            class="input input-bordered w-full max-w-full" 
-                        />
+                        <input v-model="modalList['create'].fields.date" type="date" placeholder="Type here"
+                            class="input input-bordered w-full max-w-full" />
                         <div class="label" v-if="modalList['create'].errors['date']">
-                            <span 
-                                class="label-text text-error" 
-                                v-for="(error, index) in modalList['create'].errors['date']"
-                                :key="index"
-                            >
+                            <span class="label-text text-error"
+                                v-for="(error, index) in modalList['create'].errors['date']" :key="index">
                                 {{ error }}
                             </span>
                         </div>
@@ -285,18 +338,11 @@ onMounted(() => {
                         <div class="label">
                             <span class="label-text">Time</span>
                         </div>
-                        <input 
-                            v-model="modalList['create'].fields.time" 
-                            type="time" 
-                            placeholder="Type here" 
-                            class="input input-bordered w-full max-w-full" 
-                        />
+                        <input v-model="modalList['create'].fields.time" type="time" placeholder="Type here"
+                            class="input input-bordered w-full max-w-full" />
                         <div class="label" v-if="modalList['create'].errors['time']">
-                            <span 
-                                class="label-text text-error" 
-                                v-for="(error, index) in modalList['create'].errors['time']"
-                                :key="index"
-                            >
+                            <span class="label-text text-error"
+                                v-for="(error, index) in modalList['create'].errors['time']" :key="index">
                                 {{ error }}
                             </span>
                         </div>
@@ -307,19 +353,11 @@ onMounted(() => {
                     <div class="label">
                         <span class="label-text">Content</span>
                     </div>
-                    <QuillEditor 
-                        placeholder="Enter your content" 
-                        class="!h-36" 
-                        contentType="html"
-                        v-model:content="modalList['create'].fields.content" 
-                        theme="snow" 
-                    />
+                    <QuillEditor placeholder="Enter your content" class="!h-36" contentType="html"
+                        v-model:content="modalList['create'].fields.content" theme="snow" />
                     <div class="label" v-if="modalList['create'].errors['content']">
-                        <span 
-                            class="label-text text-error" 
-                            v-for="(error, index) in modalList['create'].errors['content']"
-                            :key="index"
-                        >
+                        <span class="label-text text-error"
+                            v-for="(error, index) in modalList['create'].errors['content']" :key="index">
                             {{ error }}
                         </span>
                     </div>
@@ -328,32 +366,23 @@ onMounted(() => {
             </template>
 
             <template #action>
-                <CButton 
-                    class="btn btn-primary" 
-                    type="submit" 
-                    :title="'Save'" 
-                    :loading="modalList.create.processing"
-                >
+                <CButton class="btn btn-primary" type="submit" :title="'Save'" :loading="modalList.create.processing">
                     <template #icon>
                         <span v-if="modalList.create.processing" class="loading loading-spinner loading-xs"></span>
                         <i v-else class="bi bi-floppy"></i>
                     </template>
                 </CButton>
-                <CButton 
-                    type="button" 
-                    @click="
+                <CButton type="button" @click="
                         resetFormValues('create');
                         resetErrorValues('create');
                         toggleModal('create', false);
-                    " 
-                    :title="'Close'"
-                 />
+                    " :title="'Close'" />
             </template>
         </CModal>
 
-        <CModal
-            :open="modalList.delete.open"
-            :title="modalList.delete.title"
+        <CModal 
+            :open="modalList.delete.open" 
+            :title="modalList.delete.title" 
             @toggle="toggleModal('delete', $event)"
             @submit-callback="deleteEvent(modalList.delete.fields.id)"
         >
@@ -362,34 +391,21 @@ onMounted(() => {
             </template>
 
             <template #action>
-                <CButton 
-                    class="btn btn-primary" 
-                    type="submit" 
-                    :title="'Delete'" 
-                    :loading="modalList.delete.processing"
-                >
+                <CButton class="btn btn-primary" type="submit" :title="'Delete'" :loading="modalList.delete.processing">
                     <template #icon>
                         <span v-if="modalList.delete.processing" class="loading loading-spinner loading-xs"></span>
                         <i v-else class="bi bi-trash"></i>
                     </template>
                 </CButton>
-                <CButton 
-                    type="button" 
-                    @click="
+                <CButton type="button" @click="
                         resetFormValues('delete');
                         toggleModal('delete', false);
-                    " 
-                    :title="'Cancel'"
-                 />
+                    " :title="'Cancel'" />
             </template>
         </CModal>
 
-        <CModal 
-            :open="modalList.update.open" 
-            :title="modalList.update.title" 
-            @toggle="toggleModal('update', $event)"
-            @submit-callback="updateEvent"
-        >
+        <CModal :open="modalList.update.open" :title="modalList.update.title" @toggle="toggleModal('update', $event)"
+            @submit-callback="updateEvent">
 
             <template #modal-body>
 
@@ -397,21 +413,14 @@ onMounted(() => {
                     <div class="label">
                         <span class="label-text">Title</span>
                     </div>
-                    <input 
-                        v-model="modalList['update'].fields.title" 
-                        type="text" 
-                        placeholder="Enter your title" 
-                        class="input input-bordered w-full max-w-full" 
-                    />
+                    <input v-model="modalList['update'].fields.title" type="text" placeholder="Enter your title"
+                        class="input input-bordered w-full max-w-full" />
                     <div class="label" v-if="modalList['update'].errors['title']">
-                            <span 
-                                class="label-text text-error" 
-                                v-for="(error, index) in modalList['update'].errors['title']"
-                                :key="index"
-                            >
-                                {{ error }}
-                            </span>
-                        </div>
+                        <span class="label-text text-error"
+                            v-for="(error, index) in modalList['update'].errors['title']" :key="index">
+                            {{ error }}
+                        </span>
+                    </div>
                 </label>
 
                 <div class="flex flex-row my-2 space-x-2">
@@ -419,18 +428,11 @@ onMounted(() => {
                         <div class="label">
                             <span class="label-text">Date</span>
                         </div>
-                        <input 
-                            v-model="modalList['update'].fields.date" 
-                            type="date" 
-                            placeholder="Type here" 
-                            class="input input-bordered w-full max-w-full" 
-                        />
+                        <input v-model="modalList['update'].fields.date" type="date" placeholder="Type here"
+                            class="input input-bordered w-full max-w-full" />
                         <div class="label" v-if="modalList['update'].errors['date']">
-                            <span 
-                                class="label-text text-error" 
-                                v-for="(error, index) in modalList['update'].errors['date']"
-                                :key="index"
-                            >
+                            <span class="label-text text-error"
+                                v-for="(error, index) in modalList['update'].errors['date']" :key="index">
                                 {{ error }}
                             </span>
                         </div>
@@ -439,18 +441,11 @@ onMounted(() => {
                         <div class="label">
                             <span class="label-text">Time</span>
                         </div>
-                        <input 
-                            v-model="modalList['update'].fields.time" 
-                            type="time" 
-                            placeholder="Type here" 
-                            class="input input-bordered w-full max-w-full" 
-                        />
+                        <input v-model="modalList['update'].fields.time" type="time" placeholder="Type here"
+                            class="input input-bordered w-full max-w-full" />
                         <div class="label" v-if="modalList['update'].errors['time']">
-                            <span 
-                                class="label-text text-error" 
-                                v-for="(error, index) in modalList['update'].errors['time']"
-                                :key="index"
-                            >
+                            <span class="label-text text-error"
+                                v-for="(error, index) in modalList['update'].errors['time']" :key="index">
                                 {{ error }}
                             </span>
                         </div>
@@ -461,17 +456,11 @@ onMounted(() => {
                     <div class="label">
                         <span class="label-text">Content</span>
                     </div>
-                    <textarea 
-                        v-model="modalList['update'].fields.content"
-                        class="textarea textarea-bordered h-24" 
-                        placeholder="Enter your content"
-                    ></textarea>
+                    <textarea v-model="modalList['update'].fields.content" class="textarea textarea-bordered h-24"
+                        placeholder="Enter your content"></textarea>
                     <div class="label" v-if="modalList['update'].errors['content']">
-                        <span 
-                            class="label-text text-error" 
-                            v-for="(error, index) in modalList['update'].errors['content']"
-                            :key="index"
-                        >
+                        <span class="label-text text-error"
+                            v-for="(error, index) in modalList['update'].errors['content']" :key="index">
                             {{ error }}
                         </span>
                     </div>
@@ -480,38 +469,22 @@ onMounted(() => {
             </template>
 
             <template #action>
-                <CButton 
-                    class="btn btn-primary" 
-                    type="submit" 
-                    :title="'Update'" 
-                    :loading="modalList.update.processing"
-                >
+                <CButton class="btn btn-primary" type="submit" :title="'Update'" :loading="modalList.update.processing">
                     <template #icon>
-                        <span 
-                            v-if="modalList.update.processing" 
-                            class="loading loading-spinner loading-xs"
-                        ></span>
+                        <span v-if="modalList.update.processing" class="loading loading-spinner loading-xs"></span>
                         <i v-else class="bi bi-floppy"></i>
                     </template>
                 </CButton>
-                <CButton 
-                    type="button" 
-                    @click="
+                <CButton type="button" @click="
                         resetFormValues('update');
                         resetErrorValues('update');
                         toggleModal('update', false);
-                    " 
-                    :title="'Close'"
-                 />
+                    " :title="'Close'" />
             </template>
         </CModal>
 
-        <CModal
-            :open="modalList.content.open" 
-            :title="modalList.content.title" 
-            @toggle="toggleModal('content', $event)"
-            @submit-callback="false"
-        >
+        <CModal :open="modalList.content.open" :title="modalList.content.title" @toggle="toggleModal('content', $event)"
+            @submit-callback="false">
             <template #modal-body>
                 <div class="max-h-[30rem]">
                     <div v-html="modalList.content.content"></div>
