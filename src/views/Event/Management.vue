@@ -1,19 +1,15 @@
 <script setup>
-import { inject, onMounted, ref } from 'vue';
+import { inject, ref } from 'vue';
 import CButton from '../../components/CButton.vue';
 import CTable from '../../components/CTable.vue';
 import CInput from '../../components/CInput.vue';
 import CModal from '../../components/CModal.vue';
 import { useToast } from 'vue-toastification';
-import dateFormat from '../../helpers/dateFormat';
-import debounce from '../../helpers/debounce';
 
 const search = ref('');
-const events = ref([]);
+const dataTable = ref();
 const axios = inject('axios');
 const toast = useToast();
-
-const loadingTable = ref(false);
 
 const modalList = ref({
     create: {
@@ -50,22 +46,13 @@ const modalList = ref({
     }
 });
 
-const getEvents = () => {
-    loadingTable.value = true;
-    axios.get(`event?search=${search.value}`)
-        .then((response) => {
-            events.value = response.data;
-            loadingTable.value = false;
-        })
-}
-
 const createEvent = () => {
     resetErrorValues('create');
     modalList.value['create'].processing = true;
     axios.post('event', modalList.value['create'].fields)
         .then((response) => {
             toast.success('Event successfully created!');
-            events.value.unshift({...response, total_participant: 0});
+            dataTable.value.getData();
             modalList.value['create'].processing = false
             resetFormValues('create');
             toggleModal('create', false);
@@ -85,14 +72,7 @@ const updateEvent = () => {
         .then((response) => {
             toast.success('Event successfully updated!');
             modalList.value['update'].processing = false
-            
-            events.value = events.value.map(event => {
-                let updateEvent = { ... modalList.value['update'].fields }
-                return event.id == modalList.value['update'].fields?.id ? 
-                    updateEvent : 
-                    event;
-            })
-
+            dataTable.value.getData();
             resetFormValues('update');
             toggleModal('update', false);
         })
@@ -106,8 +86,8 @@ const deleteEvent = (id) => {
     axios.delete(`event/${id}`)
         .then((response) => {
             toast.success('Event successfully deleted!');
-            events.value = events.value.filter((event) => event.id != id);
             modalList.value['delete'].processing = false;
+            dataTable.value.getData();
             resetFormValues('delete');
             toggleModal('delete', false);
         })
@@ -133,7 +113,10 @@ const toggleModal = (formType, state) => {
     modalList.value[formType].open = state
 }
 
-const options = {
+const options = ref({
+    endpoint: 'event',
+    loading: true,
+    pagination: true,
     columns: [
         {
             name: '#',
@@ -220,18 +203,24 @@ const options = {
             centered: true,
         },
     ],
-}
-
-onMounted(() => {
-    getEvents();
-});
+})
 
 </script>
 <template>
     <div>
         <div class="flex justify-between items-center mt-4 mb-8">
-            <CInput v-model="search" @keypress="getEvents" :placeholder="'Search'" id="search" class="w-[20rem]" />
-            <CButton class="w-[8rem] btn-primary" @click="toggleModal('create', true)" :title="'Add Event'">
+            <CInput 
+                v-model="search" 
+                @keypress="dataTable.getData()" 
+                placeholder="Search" 
+                id="search" 
+                class="w-[20rem]"
+            />
+            <CButton 
+                class="w-[8rem] btn-primary"
+                @click="toggleModal('create', true)"
+                title="Add Event"
+            >
                 <template #icon>
                     <i class="bi bi-calendar-event"></i>
                 </template>
@@ -239,9 +228,8 @@ onMounted(() => {
         </div>
 
         <CTable 
-            :options="options" 
-            :data="events" 
-            class="overflow-x-auto shadow rounded-xl mb-4"
+            :options="options"
+            ref="dataTable"
         >
             <template #status="{ datum }">
                 <div class="capitalize badge badge-primary badge-outline">
@@ -289,13 +277,6 @@ onMounted(() => {
                 </div>
             </template>
         </CTable>
-
-        <div class="join mt-4">
-            <button class="join-item btn">1</button>
-            <button class="join-item btn btn-active">2</button>
-            <button class="join-item btn">3</button>
-            <button class="join-item btn">4</button>
-        </div>
 
         <CModal 
             :open="modalList.create.open" 
@@ -404,8 +385,12 @@ onMounted(() => {
             </template>
         </CModal>
 
-        <CModal :open="modalList.update.open" :title="modalList.update.title" @toggle="toggleModal('update', $event)"
-            @submit-callback="updateEvent">
+        <CModal 
+            :open="modalList.update.open" 
+            :title="modalList.update.title" 
+            @toggle="toggleModal('update', $event)"
+            @submit-callback="updateEvent"
+        >
 
             <template #modal-body>
 
@@ -483,8 +468,12 @@ onMounted(() => {
             </template>
         </CModal>
 
-        <CModal :open="modalList.content.open" :title="modalList.content.title" @toggle="toggleModal('content', $event)"
-            @submit-callback="false">
+        <CModal 
+            :open="modalList.content.open" 
+            :title="modalList.content.title" 
+            @toggle="toggleModal('content', $event)"
+            @submit-callback="false"
+        >
             <template #modal-body>
                 <div class="max-h-[30rem]">
                     <div v-html="modalList.content.content"></div>
